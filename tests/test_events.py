@@ -52,7 +52,6 @@ def test_parse_valid_process_execution_event():
         ({"username": ""}, "username"),
         ({"source_ip": "not-an-ip"}, "source_ip"),
         ({"username": "a" * 257}, "username"),
-        # YOUR TURN: add a username of 257 characters ("a" * 257)
     ],
 )
 def test_invalid_authentication_events_are_rejected(overrides, bad_field):
