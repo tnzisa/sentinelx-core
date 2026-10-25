@@ -1,3 +1,5 @@
+import re
+
 from pydantic import BaseModel, ConfigDict
 
 from sentinelx.events import AuthenticationEvent, ProcessExecutionEvent
@@ -44,3 +46,29 @@ def privileged_activity(
             f"Privileged account {event.username} logged in from {event.source_ip}"
         ),
     )
+
+
+SUSPICIOUS_COMMAND_PATTERNS = {
+    "encoded PowerShell": re.compile(
+        r"\b(?:powershell|pwsh)(?:\.exe)?\b.*\s-(?:e|ec|enc\w*)(?=\s|$)",
+        re.IGNORECASE,
+    ),
+    "wget": re.compile(r"\bwget(?:\.exe)?\b", re.IGNORECASE),
+    "curl": re.compile(r"\bcurl(?:\.exe)?\b", re.IGNORECASE),
+}
+
+
+def suspicious_command(
+    event: AuthenticationEvent | ProcessExecutionEvent,
+) -> Finding | None:
+    if not isinstance(event, ProcessExecutionEvent):
+        return None
+    for name, pattern in SUSPICIOUS_COMMAND_PATTERNS.items():
+        if pattern.search(event.command):
+            return Finding(
+                rule_id="suspicious_command",
+                title="Suspicious command execution",
+                event_id=event.event_id,
+                evidence=f"Command by {event.username} matched: {name}",
+            )
+    return None
