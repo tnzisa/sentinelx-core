@@ -38,6 +38,32 @@ def test_privileged_activity_fires_for_privileged_account():
     assert finding.event_id == event.event_id
 
 
+def test_privileged_activity_does_not_fire_for_non_privileged_account():
+    event = parse_event(make_auth_raw(privileged=False))
+    finding = privileged_activity(event)
+    assert finding is None
+
+
+def test_privileged_activity_does_not_fire_on_process_execution_event():
+    event = parse_event(make_process_raw())
+    finding = privileged_activity(event)
+    assert finding is None
+
+
+def test_privileged_activity_fires_without_failed_attempts():
+    event = make_auth_raw(privileged=True, failed_attempts=0)
+    finding = privileged_activity(parse_event(event))
+    assert finding is not None
+
+
+def test_privileged_activity_evidence_handles_missing_source_ip():
+    event = parse_event(make_auth_raw(privileged=True, source_ip=None))
+    finding = privileged_activity(event)
+    assert finding is not None
+    assert "admin" in finding.evidence
+    assert "None" not in finding.evidence
+
+
 @pytest.mark.parametrize(
     "command",
     [
@@ -62,6 +88,7 @@ def test_suspicious_command_fires(command):
         "curly.exe --help",
         r"notepad.exe C:\notes.txt",
         "powershell -NoProfile Get-Date",
+        "mycurl --help",
     ],
 )
 def test_suspicious_command_does_not_fire(command):

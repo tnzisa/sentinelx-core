@@ -38,13 +38,14 @@ def privileged_activity(
         return None
     if not event.privileged:
         return None
+
+    ip_text = "unknown source" if event.source_ip is None else str(event.source_ip)
+
     return Finding(
         rule_id="privileged_activity",
         title="Privileged account activity",
         event_id=event.event_id,
-        evidence=(
-            f"Privileged account {event.username} logged in from {event.source_ip}"
-        ),
+        evidence=(f"Privileged account {event.username} logged in from {ip_text} "),
     )
 
 
