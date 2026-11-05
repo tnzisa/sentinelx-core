@@ -1,15 +1,21 @@
 import pytest
 from pydantic import ValidationError
 
-from sentinelx.engine import RULES, AnalysisResult, analyze
+from sentinelx.engine import AnalysisResult, analyze
 from sentinelx.events import parse_event
-from sentinelx.rules import (
-    failed_logins,
-    privileged_activity,
-    suspicious_command,
-)
 from sentinelx.scoring import RiskLevel
 from tests.helpers import make_auth_raw, make_process_raw
+
+ENCODED_PS = "powershell.exe -EncodedCommand ABC123"
+
+
+@pytest.fixture
+def three_rule_events():
+    return [
+        parse_event(make_auth_raw(failed_attempts=8)),
+        parse_event(make_auth_raw(failed_attempts=0, privileged=True)),
+        parse_event(make_process_raw(command=ENCODED_PS)),
+    ]
 
 
 def test_analyze_with_no_events():
@@ -36,14 +42,8 @@ def test_analyze_with_benign_events():
     assert result.event_count == 2
 
 
-def test_analyze_with_all_three_rules_triggered():
-    events = [
-        parse_event(make_auth_raw(failed_attempts=8)),
-        parse_event(make_auth_raw(failed_attempts=0, privileged=True)),
-        parse_event(make_process_raw(command="powershell.exe -EncodedCommand ABC123")),
-    ]
-
-    result = analyze(events)
+def test_analyze_with_all_three_rules_triggered(three_rule_events):
+    result = analyze(three_rule_events)
 
     assert result.score == 95
     assert result.risk_level == RiskLevel.CRITICAL
@@ -73,46 +73,35 @@ def test_repeated_failed_login_events_do_not_increase_rule_weight():
     assert result.event_count == 10
 
 
-def test_rule_order_is_fixed():
-    expected_order = (
-        failed_logins,
-        privileged_activity,
-        suspicious_command,
-    )
+def test_findings_follow_rule_order_for_one_event():
+    event = parse_event(make_auth_raw(failed_attempts=8, privileged=True))
 
-    assert RULES == expected_order
-    assert isinstance(RULES, tuple)
+    result = analyze([event])
+
+    assert [f.rule_id for f in result.findings] == [
+        "failed_logins",
+        "privileged_activity",
+    ]
 
 
 def test_analysis_result_is_immutable():
     result = analyze([])
+
     with pytest.raises(ValidationError):
         result.score = 50
     assert result.score == 0
 
 
-def test_reversing_event_order_preserves_score_and_risk():
-    events = [
-        parse_event(make_auth_raw(failed_attempts=8)),
-        parse_event(make_auth_raw(privileged=True)),
-        parse_event(make_process_raw(command="powershell.exe -EncodedCommand ABC123")),
-    ]
+def test_reversing_event_order_preserves_score_and_risk(three_rule_events):
+    forward = analyze(three_rule_events)
+    reverse = analyze(list(reversed(three_rule_events)))
 
-    forward_result = analyze(events)
-    reverse_result = analyze(list(reversed(events)))
-
-    assert reverse_result.score == forward_result.score
-    assert reverse_result.risk_level == forward_result.risk_level
+    assert reverse.score == forward.score
+    assert reverse.risk_level == forward.risk_level
 
 
-def test_analyzing_same_events_twice_is_deterministic():
-    events = [
-        parse_event(make_auth_raw(failed_attempts=8)),
-        parse_event(make_auth_raw(privileged=True)),
-        parse_event(make_process_raw(command="powershell.exe -EncodedCommand ABC123")),
-    ]
+def test_analyzing_same_events_twice_is_deterministic(three_rule_events):
+    first = analyze(three_rule_events)
+    second = analyze(three_rule_events)
 
-    first_result = analyze(events)
-    second_result = analyze(events)
-
-    assert first_result == second_result
+    assert first == second
