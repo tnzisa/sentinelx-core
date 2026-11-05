@@ -105,3 +105,8 @@ def test_analyzing_same_events_twice_is_deterministic(three_rule_events):
     second = analyze(three_rule_events)
 
     assert first == second
+
+
+def test_analyze_rejects_non_event_input():
+    with pytest.raises(TypeError):
+        analyze([make_auth_raw()])

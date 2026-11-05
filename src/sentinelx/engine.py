@@ -33,6 +33,9 @@ def analyze(events: Sequence[Event]) -> AnalysisResult:
     findings: list[Finding] = []
 
     for event in events:
+        if not isinstance(event, Event):
+            raise TypeError(f"Expected a parsed event, got {type(event).__name__}")
+
         for rule in RULES:
             finding = rule(event)
             if finding is not None:
