@@ -3,6 +3,10 @@ import logging
 import sys
 from datetime import UTC, datetime
 
+from sentinelx.engine import AnalysisResult
+
+logger = logging.getLogger("sentinelx.analysis")
+
 
 class JsonFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
@@ -24,3 +28,17 @@ def configure_logging(level: int = logging.INFO) -> None:
         handler = logging.StreamHandler(sys.stderr)
         handler.setFormatter(JsonFormatter())
         logger.addHandler(handler)
+
+
+def log_analysis(result: AnalysisResult) -> None:
+    logger.info(
+        "analysis_complete",
+        extra={
+            "fields": {
+                "event_count": result.event_count,
+                "score": result.score,
+                "risk_level": result.risk_level.value,
+                "rule_ids": sorted({f.rule_id for f in result.findings}),
+            }
+        },
+    )

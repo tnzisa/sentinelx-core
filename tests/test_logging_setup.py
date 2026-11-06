@@ -5,7 +5,10 @@ from datetime import datetime
 
 import pytest
 
-from sentinelx.logging_setup import JsonFormatter, configure_logging
+from sentinelx.engine import analyze
+from sentinelx.events import parse_event
+from sentinelx.logging_setup import JsonFormatter, configure_logging, log_analysis
+from tests.helpers import make_auth_raw, make_process_raw
 
 
 @pytest.fixture
@@ -34,6 +37,50 @@ def test_configure_logging_is_idempotent(clean_logger):
     configure_logging()
     configure_logging()
     assert len(clean_logger.handlers) == 1
+
+
+def test_log_analysis_records_summary_fields(caplog):
+    events = [
+        parse_event(make_auth_raw(failed_attempts=8, privileged=True)),
+        parse_event(make_process_raw()),
+    ]
+    result = analyze(events)
+
+    with caplog.at_level(logging.INFO, logger="sentinelx"):
+        log_analysis(result)
+
+    fields = caplog.records[0].fields
+    assert fields["score"] == 95
+    assert fields["risk_level"] == "CRITICAL"
+    assert fields["rule_ids"] == [
+        "failed_logins",
+        "privileged_activity",
+        "suspicious_command",
+    ]
+    assert fields["event_count"] == 2
+
+
+def test_log_analysis_excludes_sensitive_fields(caplog):
+    events = [
+        parse_event(make_auth_raw(failed_attempts=8, privileged=True)),
+        parse_event(make_process_raw()),
+    ]
+
+    result = analyze(events)
+
+    with caplog.at_level(logging.INFO, logger="sentinelx"):
+        log_analysis(result)
+
+    record = next(
+        record for record in caplog.records if record.name == "sentinelx.analysis"
+    )
+
+    assert set(record.fields.keys()) == {
+        "event_count",
+        "score",
+        "risk_level",
+        "rule_ids",
+    }
 
 
 def test_json_formatter_staandard_keys(log_stream):
