@@ -148,3 +148,17 @@ def test_non_json_values_do_not_drop_the_log_line(log_stream):
 
     assert "2026-10-10" in payload["when"]
     assert payload["ids"] == "{'a'}"
+
+
+def test_json_formatter_serializes_non_json_values(log_stream):
+    logger, stream = log_stream
+    logger.info(
+        "test",
+        extra={"fields": {"tags": {"security", "audit"}}},
+    )
+
+    payload = json.loads(stream.getvalue())
+
+    assert isinstance(payload["tags"], str)
+    assert "security" in payload["tags"]
+    assert "audit" in payload["tags"]
