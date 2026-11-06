@@ -1,7 +1,7 @@
 import io
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -135,3 +135,16 @@ def test_extra_fields_cannot_override_core_keys(log_stream):
 
     assert payload["level"] == "INFO"
     assert payload["message"] == "real message"
+
+
+def test_non_json_values_do_not_drop_the_log_line(log_stream):
+    logger, stream = log_stream
+    logger.info(
+        "x",
+        extra={"fields": {"when": datetime(2026, 10, 10, tzinfo=UTC), "ids": {"a"}}},
+    )
+
+    payload = json.loads(stream.getvalue())
+
+    assert "2026-10-10" in payload["when"]
+    assert payload["ids"] == "{'a'}"
