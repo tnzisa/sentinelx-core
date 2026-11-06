@@ -24,15 +24,6 @@ def log_stream():
     logger.handlers = []
 
 
-@pytest.fixture
-def clean_logger():
-    logger = logging.getLogger("sentinelx")
-    saved = (logger.handlers[:], logger.propagate, logger.level)
-    logger.handlers = []
-    yield logger
-    logger.handlers, logger.propagate, logger.level = saved
-
-
 def test_configure_logging_is_idempotent(clean_logger):
     configure_logging()
     configure_logging()
