@@ -1,5 +1,6 @@
 import json
 import logging
+import sys
 from datetime import UTC, datetime
 
 
@@ -13,3 +14,13 @@ class JsonFormatter(logging.Formatter):
         }
         payload.update(getattr(record, "fields", {}))
         return json.dumps(payload, sort_keys=True)
+
+
+def configure_logging(level: int = logging.INFO) -> None:
+    logger = logging.getLogger("sentinelx")
+    logger.setLevel(level)
+    logger.propagate = False
+    if not any(isinstance(h.formatter, JsonFormatter) for h in logger.handlers):
+        handler = logging.StreamHandler(sys.stderr)
+        handler.setFormatter(JsonFormatter())
+        logger.addHandler(handler)

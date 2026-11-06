@@ -5,7 +5,7 @@ from datetime import datetime
 
 import pytest
 
-from sentinelx.logging_setup import JsonFormatter
+from sentinelx.logging_setup import JsonFormatter, configure_logging
 
 
 @pytest.fixture
@@ -19,6 +19,21 @@ def log_stream():
     logger.propagate = False
     yield logger, stream
     logger.handlers = []
+
+
+@pytest.fixture
+def clean_logger():
+    logger = logging.getLogger("sentinelx")
+    saved = (logger.handlers[:], logger.propagate, logger.level)
+    logger.handlers = []
+    yield logger
+    logger.handlers, logger.propagate, logger.level = saved
+
+
+def test_configure_logging_is_idempotent(clean_logger):
+    configure_logging()
+    configure_logging()
+    assert len(clean_logger.handlers) == 1
 
 
 def test_json_formatter_staandard_keys(log_stream):
