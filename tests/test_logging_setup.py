@@ -122,3 +122,16 @@ def test_json_formatter_timestamp_is_utc_aware(log_stream):
 
     assert timestamp.tzinfo is not None
     assert timestamp.utcoffset() == timedelta(0)
+
+
+def test_extra_fields_cannot_override_core_keys(log_stream):
+    logger, stream = log_stream
+    logger.info(
+        "real message",
+        extra={"fields": {"level": "CRITICAL", "message": "forged"}},
+    )
+
+    payload = json.loads(stream.getvalue())
+
+    assert payload["level"] == "INFO"
+    assert payload["message"] == "real message"

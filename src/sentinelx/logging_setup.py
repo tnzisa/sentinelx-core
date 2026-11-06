@@ -11,12 +11,12 @@ logger = logging.getLogger("sentinelx.analysis")
 class JsonFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         payload = {
+            **getattr(record, "fields", {}),
             "timestamp": datetime.fromtimestamp(record.created, tz=UTC).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
         }
-        payload.update(getattr(record, "fields", {}))
         return json.dumps(payload, sort_keys=True)
 
 
