@@ -17,7 +17,7 @@ class JsonFormatter(logging.Formatter):
             "logger": record.name,
             "message": record.getMessage(),
         }
-        return json.dumps(payload, sort_keys=True)
+        return json.dumps(payload, sort_keys=True, default=str)
 
 
 def configure_logging(level: int = logging.INFO) -> None:
