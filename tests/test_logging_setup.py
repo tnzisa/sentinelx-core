@@ -1,7 +1,7 @@
 import io
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytest
 
@@ -114,15 +114,11 @@ def test_json_formatter_prevents_log_injection(log_stream):
     assert len(output.splitlines()) == 1
 
 
-def test_json_formatter_timestamp_format(log_stream):
+def test_json_formatter_timestamp_is_utc_aware(log_stream):
     logger, stream = log_stream
     logger.info("test")
 
-    payload = json.loads(stream.getvalue())
-    timestamp_str = payload["timestamp"]
+    timestamp = datetime.fromisoformat(json.loads(stream.getvalue())["timestamp"])
 
-    # Check if the timestamp is in ISO 8601 format
-    try:
-        datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
-    except ValueError:
-        pytest.fail(f"Timestamp '{timestamp_str}' is not in ISO 8601 format")
+    assert timestamp.tzinfo is not None
+    assert timestamp.utcoffset() == timedelta(0)
