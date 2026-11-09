@@ -67,3 +67,17 @@ def test_events_are_immutable():
 def test_username_at_maximum_length_is_accepted():
     event = parse_event(make_auth_raw(username="a" * 256))
     assert len(event.username) == 256
+
+
+def test_command_at_maximum_length_is_accepted():
+    assert len(parse_event(make_process_raw(command="a" * 8192)).command) == 8192
+
+
+def test_command_over_maximum_length_is_rejected():
+    with pytest.raises(ValidationError):
+        parse_event(make_process_raw(command="a" * 8193))
+
+
+def test_ipv6_source_ip_is_accepted():
+    event = parse_event(make_auth_raw(source_ip="2001:db8::1"))
+    assert str(event.source_ip) == "2001:db8::1"

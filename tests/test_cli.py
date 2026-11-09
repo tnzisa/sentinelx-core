@@ -168,3 +168,9 @@ def test_summary_escapes_control_characters(tmp_path, capsys):
     out = capsys.readouterr().out
     assert "\x1b" not in out
     assert len(out.splitlines()) == 5  # 4 header lines + 1 finding
+
+
+def test_oversized_file_exits_2(tmp_path, capsys, monkeypatch):
+    monkeypatch.setattr("sentinelx.cli.MAX_FILE_BYTES", 10)
+    assert main(["analyze", str(write_events(tmp_path, SCENARIO))]) == 2
+    assert "too large" in capsys.readouterr().err

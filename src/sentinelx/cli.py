@@ -12,6 +12,7 @@ from sentinelx.logging_setup import configure_logging, log_analysis
 
 EXIT_OK = 0
 EXIT_BAD_INPUT = 2
+MAX_FILE_BYTES = 10 * 1024 * 1024  # 10 MB
 
 
 class InputError(Exception):
@@ -30,7 +31,12 @@ def build_parser() -> argparse.ArgumentParser:
 
 def load_events(path: Path) -> list[Event]:
     try:
+        if path.stat().st_size > MAX_FILE_BYTES:
+            raise InputError("file too large")
+
         text = path.read_text(encoding="utf-8-sig")
+    except InputError:
+        raise
     except UnicodeDecodeError:
         raise InputError("file must be UTF-8 encoded text") from None
     except FileNotFoundError:
