@@ -52,7 +52,7 @@ def privileged_activity(
 SUSPICIOUS_COMMAND_PATTERNS = {
     "encoded PowerShell": re.compile(
         r"\b(?:powershell|pwsh)(?:\.exe)?\b.*\s-(?:e|ec|enc\w*)(?=\s|$)",
-        re.IGNORECASE,
+        re.IGNORECASE | re.DOTALL,
     ),
     "wget": re.compile(r"\bwget(?:\.exe)?\b", re.IGNORECASE),
     "curl": re.compile(r"\bcurl(?:\.exe)?\b", re.IGNORECASE),

