@@ -90,6 +90,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         reconfigure = getattr(stream, "reconfigure", None)
         if reconfigure is not None:
             reconfigure(errors="backslashreplace")
+
     args = build_parser().parse_args(argv)
     configure_logging()
     try:
