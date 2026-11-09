@@ -156,3 +156,15 @@ def test_utf16_file_exits_2_with_clear_message(tmp_path, capsys):
     path.write_bytes(json.dumps(SCENARIO).encode("utf-16"))
     assert main(["analyze", str(path)]) == 2
     assert "UTF-8" in capsys.readouterr().err
+
+
+def test_summary_escapes_control_characters(tmp_path, capsys):
+    events = [
+        make_auth_raw(
+            username="admin\n[FAKE] Risk level: LOW\x1b[31m", failed_attempts=8
+        )
+    ]
+    main(["analyze", str(write_events(tmp_path, events))])
+    out = capsys.readouterr().out
+    assert "\x1b" not in out
+    assert len(out.splitlines()) == 5  # 4 header lines + 1 finding

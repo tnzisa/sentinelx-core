@@ -67,8 +67,16 @@ def format_summary(result: AnalysisResult) -> str:
         f"Findings: {len(result.findings)}",
     ]
     for finding in result.findings:
-        lines.append(f"  - [{finding.rule_id}] {finding.title}: {finding.evidence}")
+        evidence = make_printable(finding.evidence)
+        lines.append(f"  - [{finding.rule_id}] {finding.title}: {evidence}")
     return "\n".join(lines)
+
+
+def make_printable(text: str) -> str:
+    return "".join(
+        ch if ch.isprintable() else ch.encode("unicode_escape").decode("ascii")
+        for ch in text
+    )
 
 
 def main(argv: Sequence[str] | None = None) -> int:
