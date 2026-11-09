@@ -131,3 +131,15 @@ def test_example_events_file_runs_successfully(capsys):
     assert code == 0
     assert "Risk score: 95" in captured.out
     assert "Risk level: CRITICAL" in captured.out
+
+
+def test_deeply_nested_json_exits_2(tmp_path, capsys):
+    path = tmp_path / "nested.json"
+    path.write_text("[" * 200_000, encoding="utf-8")
+    assert main(["analyze", str(path)]) == 2
+
+
+def test_huge_integer_exits_2(tmp_path, capsys):
+    path = tmp_path / "bigint.json"
+    path.write_text("[" + "1" * 5000 + "]", encoding="utf-8")
+    assert main(["analyze", str(path)]) == 2

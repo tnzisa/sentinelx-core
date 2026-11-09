@@ -38,7 +38,7 @@ def load_events(path: Path) -> list[Event]:
 
     try:
         raw = json.loads(text)
-    except json.JSONDecodeError:
+    except (ValueError, RecursionError):
         raise InputError("file is not valid JSON") from None
     if not isinstance(raw, list):
         raise InputError("top-level JSON value must be a list of events")
