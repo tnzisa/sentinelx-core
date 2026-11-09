@@ -80,6 +80,10 @@ def make_printable(text: str) -> str:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(errors="backslashreplace")
     args = build_parser().parse_args(argv)
     configure_logging()
     try:

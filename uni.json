@@ -1,0 +1,1 @@
+[{"event_type": "authentication", "timestamp": "2026-10-10T09:30:00Z", "source": "vpn-gateway", "username": "\u041f\u0440\u0438\u0432\u0435\u0442", "source_ip": "10.0.0.25", "failed_attempts": 8}]
