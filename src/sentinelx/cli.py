@@ -30,7 +30,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 def load_events(path: Path) -> list[Event]:
     try:
-        text = path.read_text(encoding="utf-8")
+        text = path.read_text(encoding="utf-8-sig")
+    except UnicodeDecodeError:
+        raise InputError("file must be UTF-8 encoded text") from None
     except FileNotFoundError:
         raise InputError(f"file not found: {path}") from None
     except (OSError, UnicodeDecodeError) as exc:

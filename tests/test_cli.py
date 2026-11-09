@@ -143,3 +143,16 @@ def test_huge_integer_exits_2(tmp_path, capsys):
     path = tmp_path / "bigint.json"
     path.write_text("[" + "1" * 5000 + "]", encoding="utf-8")
     assert main(["analyze", str(path)]) == 2
+
+
+def test_utf8_bom_file_is_accepted(tmp_path, capsys):
+    path = tmp_path / "bom.json"
+    path.write_bytes(b"\xef\xbb\xbf" + json.dumps(SCENARIO).encode("utf-8"))
+    assert main(["analyze", str(path)]) == 0
+
+
+def test_utf16_file_exits_2_with_clear_message(tmp_path, capsys):
+    path = tmp_path / "utf16.json"
+    path.write_bytes(json.dumps(SCENARIO).encode("utf-16"))
+    assert main(["analyze", str(path)]) == 2
+    assert "UTF-8" in capsys.readouterr().err
