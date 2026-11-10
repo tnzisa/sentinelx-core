@@ -49,9 +49,25 @@ To verify that the core security logic works independently of the API. If someth
 
 Testing the engine first also helps me catch edge cases early, confirm that risk scores are consistent, and prevent incorrect detections from being exposed through the API. This gives SentinelX a more reliable foundation as I add more components.
 
-
-
 **ruff check** - Asks "Is the code free of mistakes and untidy imports?"
 **ruff format** - Asks "Is the style consistent?" 
 **pytest** - Asks "Does the behaviour still work?"
 pre-commit only runs the two Ruff checks, because they take under a second.
+
+8. An event model should represent observations, not conclusions. The source of an event cannot automatically be trusted because it may be compromised, misconfigured, or manipulated. If the source can label an event as suspicious, an attacker could set the value to false to hide malicious activity or set it to true to flood analysts with false positives.
+My own model illustrates the distinction. The privileged field represents a fact about the account: whether it has privileged access. A suspicious field would represent a verdict about the activity, which should be determined by detection rules rather than supplied by the event source.
+Keeping observations separate from verdicts also makes the system easier to maintain. For example, if I change the failed-login threshold from 5 to 10, I should update the detection rule, not the event model. Because events contain observations rather than precomputed verdicts, I can reprocess historical events under the updated rules.
+There is an important limitation: validation checks the structure and types of incoming data, not whether the information is truthful. A compromised source could also falsify failed_attempts, privileged, or other fields. Correlating observations across independent sources would eventually provide stronger context and help identify inconsistencies.
+The principle is: events contain observations; rules decide what those observations mean.
+
+9. A pure function is a function whose output depends only on its explicit inputs and which produces no side effects. Given the same input, it always returns the same output.
+
+My `failed_logins` rule follows this principle. It evaluates the event data without accessing the system clock, a database, a network connection, global state, or randomness. This makes its behaviour predictable and easy to test.
+
+Consider a rule that uses `datetime.now()` to determine whether an event occurred during business hours. Its result would depend on when the test runs, rather than only on the event being analysed. To test both branches of a condition such as `9 <= hour < 17`, I would have to run tests at different times of day or duplicate the business-hours logic inside the test. The first approach makes tests time-dependent; the second risks testing a copy of the implementation rather than the implementation itself.
+
+A cleaner design is to pass the time explicitly, for example through `is_business_hours(now)`. The function can then evaluate a supplied datetime without depending on the system clock. This is preferable to mocking `datetime.now()`, because mocking patches an external dependency rather than removing that dependency from the function.
+
+This principle also matters for SentinelX. Events already contain a `timestamp`, so future time-window rules should use the event timestamp rather than `datetime.now()`. That means replaying last week's events next month can produce the same findings, which will be important for ForensiQ.
+
+It has also made testing simpler: my 19 rule tests require no mocks, need no setup beyond helpers such as `make_auth_raw`, and finish in milliseconds.

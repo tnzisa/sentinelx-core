@@ -114,14 +114,12 @@ Each event must match one of the supported event types. Unknown fields are rejec
 Event validation errors identify the event index, affected field, and validation error type without echoing the rejected field value.
 
 ## Rules
+
 | Rule | Detects | Weight | Known noise |
-|---|---|---|---|
-
-| `failed_logins` | 5 or more failed attempts | 30 | Legitimate password mistakes can trigger the rule. The current event model does not establish a time window for the failures |
-
-| `privileged_activity` | privileged account login | 25 | Legitimate administrative access and scheduled maintenance can trigger the rule.|
-
-| `suspicious_command` | encoded PowerShell, curl, wget | 40 | Legitimate use of curl, wget, and encoded PowerShell can trigger alerts. Whole-word matching avoids false matches such as curly.exe, but filenames like curl-notes.txt can still match. A match is an indicator for investigation, not proof of malicious activity. |
+|---|---|---:|---|
+| `failed_logins` | 5 or more failed attempts | 30 | Legitimate password mistakes can trigger the rule. The current event model does not establish a time window for failures. |
+| `privileged_activity` | Privileged account login | 25 | Legitimate administrative access and scheduled maintenance can trigger the rule. |
+| `suspicious_command` | Encoded PowerShell, `curl`, and `wget` | 40 | Legitimate use of `curl`, `wget`, and encoded PowerShell can trigger alerts. Whole-word matching avoids false matches such as `curly.exe`, but filenames like `curl-notes.txt` can still match. A match is an indicator for investigation, not proof of malicious activity. |
 
 ## Risk levels
 | Score | Level |
