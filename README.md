@@ -83,7 +83,7 @@ Each event must match one of the supported event types. Unknown fields are rejec
 | `source` | Both | Yes | Non-empty string |
 | `username` | Both | Yes | String, 1–256 characters |
 | `source_ip` | Both | No | IPv4 or IPv6 address; `null` is accepted |
-| `event_id` | Both | Optional | Event identifier.A UUID is generated when omitted |
+| `event_id` | Both | No | Optional event identifier. A UUID is generated when omitted. Supply an ID for stable references across runs. |
 | `metadata` | Both | No | Dictionary; defaults to `{}` and is not used by detection rules |
 | `failed_attempts` | Authentication | No | Integer ≥ 0; defaults to `0` |
 | `privileged` | Authentication | No | Boolean; defaults to `false` |
@@ -117,11 +117,11 @@ Event validation errors identify the event index, affected field, and validation
 | Rule | Detects | Weight | Known noise |
 |---|---|---|---|
 
-| failed_logins | 5 or more failed attempts | 30 | Legitimate password mistakes can trigger the rule. The current event model does not establish a time window for the failures |
+| `failed_logins` | 5 or more failed attempts | 30 | Legitimate password mistakes can trigger the rule. The current event model does not establish a time window for the failures |
 
-| privileged_activity | privileged account login | 25 | Legitimate administrative access and scheduled maintenance can trigger the rule.|
+| `privileged_activity` | privileged account login | 25 | Legitimate administrative access and scheduled maintenance can trigger the rule.|
 
-| suspicious_command | encoded PowerShell, curl, wget | 40 | Legitimate command execution can match broad indicators. For example, substring matching could flag an executable named curly.exe |
+| `suspicious_command` | encoded PowerShell, curl, wget | 40 | Legitimate use of curl, wget, and encoded PowerShell can trigger alerts. Whole-word matching avoids false matches such as curly.exe, but filenames like curl-notes.txt can still match. A match is an indicator for investigation, not proof of malicious activity. |
 
 ## Risk levels
 | Score | Level |
