@@ -1,6 +1,6 @@
 # SentinelX Core
 
-SentinelX Core is a deterministic security-event detection and risk-scoring engine built to analyse structured security events, identify potentially suspicious activity, and assign risk scores based on predefined detection rules.
+SentinelX Core is a deterministic security-event detection and scoring engine. Given the same valid events, it produces the same findings by rule, score, risk level, and rule IDs. When an input omits event_id, however, a new identifier is generated for that event on each run.
 
 It analyses authentication and process-execution events to identify patterns such as repeated failed login attempts, privileged account activity, and potentially suspicious command execution.
 
@@ -16,6 +16,7 @@ Requires uv.
     uv sync
     uv run python -m sentinelx analyze examples/events.json
 ## Example output
+```text
 Events analyzed: 2
 Risk score: 95
 Risk level: CRITICAL
@@ -23,14 +24,14 @@ Findings: 3
     - [failed_logins] Multiple failed logins: 8 failed attempts for admin
     - [privileged_activity] Privileged account activity: Privileged account admin logged in from 10.0.0.25 
     - [suspicious_command] Suspicious command execution: Command by admin matched: encoded PowerShell
-
+```
 The analysis also emits a structured analysis_complete log record to standard error.
 
 A successful analysis exits with code 0.
 ## How it works
 SentinelX processes validated security events through independent detection and scoring stages.
 
-`` ```text ``
+```text
              SECURITY EVENTS
                     |
                     v
@@ -58,7 +59,7 @@ SentinelX processes validated security events through independent detection and 
                     |
                     v
              ANALYSIS RESULT
-`` ``` ``
+```
 **Events:** Structured authentication and process-execution events are supplied as input.
 **Validation:** Input is checked against the expected event models and field types.
 **Rules:** Each validated event is evaluated against the registered detection rules.
@@ -82,7 +83,7 @@ Each event must match one of the supported event types. Unknown fields are rejec
 | `source` | Both | Yes | Non-empty string |
 | `username` | Both | Yes | String, 1–256 characters |
 | `source_ip` | Both | No | IPv4 or IPv6 address; `null` is accepted |
-| `event_id` | Both | No | String; generated automatically when omitted |
+| `event_id` | Both | Optional | Event identifier.A UUID is generated when omitted |
 | `metadata` | Both | No | Dictionary; defaults to `{}` and is not used by detection rules |
 | `failed_attempts` | Authentication | No | Integer ≥ 0; defaults to `0` |
 | `privileged` | Authentication | No | Boolean; defaults to `false` |
@@ -141,25 +142,20 @@ Each detection rule contributes its configured weight only once per analysis, re
 
 For example, ten `failed_logins` findings still contribute 30 points, not 300. If all three rules produce findings, their combined score is 95.
 
-Risk levels:
-
-- **LOW:** 0–29
-- **MEDIUM:** 30–59
-- **HIGH:** 60–79
-- **CRITICAL:** 80–100
-
 Unknown rule IDs raise a `ValueError` rather than silently contributing zero points.
 
 ## Design decisions
 Event validation: Events are validated against typed, event-specific models before analysis. This prevents rules from operating on malformed or incorrectly structured data.
 
-Deterministic scoring: Detection and scoring are rule-based and reproducible. The same input produces the same findings and risk assessment, making results easier to test, audit, and investigate.
+Deterministic scoring: Detection and scoring are deterministic: the same events produce the same rule IDs, risk score, and risk level. Event IDs are generated randomly when not supplied, so finding references can differ between runs. Supply an event_id when stable event references are required.
 
 Unknown rules fail loudly: Rule identifiers must resolve to known detection rules. Unknown identifiers raise an error rather than being silently ignored or treated as a successful analysis.
 
 Malformed input is rejected as a whole: Invalid input is not partially analysed. This prevents incomplete or unreliable data from silently producing a risk assessment.
 
-Output sanitization: Error and validation details are presented at the CLI boundary without exposing raw input values. Analysis results are printed to stdout; structured diagnostic logs are written to stderr.
+Validation error handling: Validation errors identify the affected event field and error type without including the invalid input value. This avoids unnecessarily exposing potentially sensitive or hostile input in error messages.
+
+Control-character escaping: Non-printable characters in displayed finding evidence are escaped into visible representations, such as \n or \x1b. This helps prevent control characters in untrusted input from manipulating terminal output or forging additional output lines.
 
 ### Output
 SentinelX separates analysis results from diagnostic logging:
@@ -174,10 +170,10 @@ SentinelX separates analysis results from diagnostic logging:
 | 2 | Invalid input or usage |
 
 ## Development
-    uv run pytest - runs automated tests
-    uv run ruff check . - runs lint checks
-    uv run ruff format --check . -checks formatting
-    uv run pre-commit install -installs Git pre-commit hooks
+    uv run pytest                  # run the tests
+    uv run ruff check .            # lint
+    uv run ruff format --check .   # check formatting
+    uv run pre-commit install      # install the Git hook
 
 ## Limitations and roadmap
 Current limitations
