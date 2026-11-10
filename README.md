@@ -60,14 +60,14 @@ SentinelX processes validated security events through independent detection and 
                     v
              ANALYSIS RESULT
 ```
-**Events:** Structured authentication and process-execution events are supplied as input.
-**Validation:** Input is checked against the expected event models and field types.
-**Rules:** Each validated event is evaluated against the registered detection rules.
-**Findings:** Matching rules produce structured findings with evidence.
-**Score:** Finding weights contribute to the overall risk score. Each detection rule contributes its configured weight only once per analysis,
+- **Events:** Structured authentication and process-execution events are supplied as input.
+- **Validation:** Input is checked against the expected event models and field types.
+- **Rules:** Each validated event is evaluated against the registered detection rules.
+- **Findings:** Matching rules produce structured findings with evidence.
+- **Score:** Finding weights contribute to the overall risk score. Each detection rule contributes its configured weight only once per analysis,
 regardless of how many findings that rule produces. Findings are preserved
 individually, while the total risk score is capped at 100.
-**Risk Level:** The final score is mapped to a risk category.
+- **Risk Level:** The final score is mapped to a risk category.
 
 The engine applies its rules in a fixed order and preserves repeated findings. Its analysis results are immutable, supporting reproducible analysis.
 
