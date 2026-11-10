@@ -183,6 +183,7 @@ Current limitations
 - No API interface.
 - Pattern-based command detection may produce false positives.
 - Privileged-account detection depends on the accuracy of supplied event data.
+- Unbounded finding output: The CLI currently prints every finding in the analysis summary. There is no configurable output cap, so large event batches can produce lengthy terminal output.
 
 Planned improvements
 
